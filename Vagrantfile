@@ -124,23 +124,39 @@ Vagrant.configure("2") do |config|
         vb.customize ["modifyvm", :id, "--cpuexecutioncap", "#{$vb_cpuexecutioncap}"]
       end
 
-      ip = "172.17.8.#{i+100}"
-      config.vm.network :private_network, ip: ip
+      #ip = "172.17.8.#{i+100}"
+      #config.vm.network :private_network, ip: ip
+      ip = "192.168.100.77"
+      config.vm.network :public_network, ip: ip, :bridge => "en0: Wi-Fi (AirPort)"
+
 
       # Uncomment below to enable NFS for sharing the host machine into the coreos-vagrant VM.
       #config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true, :mount_options => ['nolock,vers=3,udp']
       $shared_folders.each_with_index do |(host_folder, guest_folder), index|
-        config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, nfs: true, mount_options: ['nolock,vers=3,udp']
+        #config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, nfs: true, mount_options: ['nolock,vers=3,udp']
+        config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
+
       end
 
       if $share_home
-        config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", :nfs => true, :mount_options => ['nolock,vers=3,udp']
+        #config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", :nfs => true, :mount_options => ['nolock,vers=3,udp']
+        config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
       end
 
       if File.exist?(CLOUD_CONFIG_PATH)
         config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
         config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
       end
+
+      # docker-compose install
+      $get_compose = <<-'EOF'
+        curl -sL https://github.com/docker/compose/releases/download/1.13.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+        sudo mkdir -p /opt/bin
+        sudo mv ~/docker-compose /opt/bin/docker-compose
+        sudo chown root:root /opt/bin/docker-compose
+        sudo chmod +x /opt/bin/docker-compose
+      EOF
+      config.vm.provision :shell, :inline => $get_compose
 
     end
   end
