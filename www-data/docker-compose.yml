@@ -1,0 +1,13 @@
+dev_app:
+  build: ./mysite
+  restart: always
+  ports:
+    - "8000:8000"
+  volumes:
+    - ./mysite:/usr/src/app
+  environment:
+    - DB_HOST=db
+    - DB_NAME=mysite
+    - DB_USERNAME=root
+    - DB_PASSWORD=rootpass
+  command: ./manage.py runserver 0.0.0.0:8000
