@@ -25,7 +25,7 @@ SECRET_KEY = '=u(a@b7d+o_%%v$fyyi^-4g*l1q%ot@^9-%j-xidqssatlb@e*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.100.77"] # ここを自分の環境にあったIPアドレスに変更する
+ALLOWED_HOSTS = ["192.168.100.100"] # ここを自分の環境にあったIPアドレスに変更する
 
 
 # Application definition
