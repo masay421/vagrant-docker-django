@@ -126,21 +126,23 @@ Vagrant.configure("2") do |config|
 
       #ip = "172.17.8.#{i+100}"
       #config.vm.network :private_network, ip: ip
-      ip = "192.168.100.77"
-      config.vm.network :public_network, ip: ip, :bridge => "en0: Wi-Fi (AirPort)"
+      #ip = "192.168.100.77" # ここを自分の環境にあったIPアドレスに変更する
+      #config.vm.network :public_network, ip: ip, :bridge => "en0: Wi-Fi (AirPort)"
+      ip = "172.17.8.177"
+      config.vm.network :private_network, ip: ip
 
 
       # Uncomment below to enable NFS for sharing the host machine into the coreos-vagrant VM.
       #config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true, :mount_options => ['nolock,vers=3,udp']
       $shared_folders.each_with_index do |(host_folder, guest_folder), index|
-        #config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, nfs: true, mount_options: ['nolock,vers=3,udp']
-        config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
+        config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, nfs: true, mount_options: ['nolock,vers=3,udp']
+        #config.vm.synced_folder host_folder.to_s, guest_folder.to_s, id: "core-share%02d" % index, type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
 
       end
 
       if $share_home
-        #config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", :nfs => true, :mount_options => ['nolock,vers=3,udp']
-        config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
+        config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", :nfs => true, :mount_options => ['nolock,vers=3,udp']
+        #config.vm.synced_folder ENV['HOME'], ENV['HOME'], id: "home", type: "rsync", mount_options: ['dmode=777','fmode=777'], owner: "core", group: "core"
       end
 
       if File.exist?(CLOUD_CONFIG_PATH)
@@ -157,6 +159,13 @@ Vagrant.configure("2") do |config|
         sudo chmod +x /opt/bin/docker-compose
       EOF
       config.vm.provision :shell, :inline => $get_compose
+
+      # port
+      config.trigger.after [:provision, :up, :reload] do
+        system('sudo ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 -gNfL 80:localhost:80 core@localhost -i ~/.vagrant.d/insecure_private_key')
+        system('sudo ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 -gNfL 443:localhost:443 core@localhost -i ~/.vagrant.d/insecure_private_key')
+        system('sudo ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 -gNfL 8000:localhost:8000 core@localhost -i ~/.vagrant.d/insecure_private_key')
+      end
 
     end
   end
